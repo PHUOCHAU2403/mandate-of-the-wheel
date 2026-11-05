@@ -1,0 +1,17 @@
+# Dependencies
+node_modules
+
+# Lockfiles
+bun.lock
+
+# Vite
+.vite
+
+# Build output
+dist
+
+# Cache
+cache
+
+# OS files
+.DS_Store

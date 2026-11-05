@@ -41,12 +41,34 @@ test('liveMode ages a reading between polls', () => {
   assert.equal(liveMode(null), 'unknown');
 });
 
-test('round math matches SqueekCore: 600 s rounds from genesis 1793022600', () => {
-  assert.deepEqual(roundAt(1793022600 * 1000), { round: 1, secondsLeft: 600 });
-  assert.deepEqual(roundAt((1793022600 + 600) * 1000), { round: 2, secondsLeft: 600 });
-  assert.equal(roundAt((1793022600 - 5) * 1000).round, 0);
+test('round math matches SqueekCore: 600 s rounds from the genesis /v1/core reports', () => {
+  // The 2026-10-25 installation: genesis 1793022600.
+  const s = { genesis: 1793022600, roundSeconds: 600 };
+  assert.deepEqual(roundAt(1793022600 * 1000, s), { round: 1, secondsLeft: 600 });
+  assert.deepEqual(roundAt((1793022600 + 600) * 1000, s), { round: 2, secondsLeft: 600 });
+  assert.equal(roundAt((1793022600 - 5) * 1000, s).round, 0);
   // /v1/economy/state said currentRound 1263 at 2026-11-04T08:16:49Z.
-  assert.equal(roundAt(Date.parse('2026-11-04T08:16:49Z')).round, 1263);
+  assert.equal(roundAt(Date.parse('2026-11-04T08:16:49Z'), s).round, 1263);
+});
+
+test('no schedule yet means no round, never a guessed one', () => {
+  assert.deepEqual(roundAt(Date.now()), { round: 0, secondsLeft: 0 });
+  assert.equal(new WheelFeed().round().round, 0);
+});
+
+test('a new installation resets the block baseline and the schedule', () => {
+  const f = new WheelFeed();
+  let coreReads = 0;
+  f.pollCore = () => { coreReads++; };
+  f.schedule = { genesis: 1793022600, roundSeconds: 600 };
+  const seen = [];
+  f.onBlocks((d) => seen.push(d));
+  f.emit({ mode: 'resting', height: 8430, installationId: 'stream-game-sepolia-test-20261025-01' });
+  f.emit({ mode: 'resting', height: 0, installationId: 'sepolia-core-sepolia-20261103' });
+  assert.equal(f.schedule, null);
+  assert.equal(coreReads, 1);
+  f.emit({ mode: 'resting', height: 2, installationId: 'sepolia-core-sepolia-20261103' });
+  assert.deepEqual(seen, [2]);
 });
 
 test('block listener fires on settled height increases only', () => {

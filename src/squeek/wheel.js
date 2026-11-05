@@ -6,10 +6,11 @@ const STATUS_EVERY = 10_000;
 const CORE_EVERY = 5 * 60_000;
 export const STALE_MS = 120_000;              // the API's own staleAfterSeconds
 const BLOCK_UNITS = 1_000_000_000;
-// SqueekCore configuration on Sepolia, used until /v1/core answers.
-const DEFAULT_SCHEDULE = { genesis: 1793022600, roundSeconds: 600 };
 
-export function roundAt(nowMs, schedule = DEFAULT_SCHEDULE) {
+// The round schedule comes only from /v1/core: Squeekchain redeploys (new genesis), so a built-in
+// fallback would show a wrong round that looks real. No schedule yet means round 0, which hides it.
+export function roundAt(nowMs, schedule) {
+  if (!schedule) return { round: 0, secondsLeft: 0 };
   const t = Math.floor(nowMs / 1000) - schedule.genesis;
   if (t < 0) return { round: 0, secondsLeft: -t };
   return { round: Math.floor(t / schedule.roundSeconds) + 1, secondsLeft: schedule.roundSeconds - (t % schedule.roundSeconds) };
@@ -19,7 +20,7 @@ export function roundAt(nowMs, schedule = DEFAULT_SCHEDULE) {
 export function parseStatus(j, nowMs = Date.now()) {
   if (!j || j.schemaVersion !== 1) return { mode: 'unknown', reason: 'schema' };
   const m = j.measurement;
-  const out = { mode: 'unknown', reason: 'no reading', rpm: null, speedMs: null, distanceM: null };
+  const out = { mode: 'unknown', reason: 'no reading', rpm: null, speedMs: null, distanceM: null, installationId: j.installationId };
   if (m) {
     const receivedAt = Date.parse(m.receivedAt);
     out.receivedAt = receivedAt;
@@ -56,7 +57,8 @@ export function liveMode(snap, nowMs = Date.now()) {
 export class WheelFeed {
   constructor() {
     this.snap = { mode: 'unknown', reason: 'loading' };
-    this.schedule = { ...DEFAULT_SCHEDULE };
+    this.schedule = null;
+    this.installation = null;
     this.listeners = new Set();
     this.blockListeners = new Set();
     this.lastHeight = null;
@@ -115,11 +117,21 @@ export class WheelFeed {
       if (c && Number(c.genesisTimestamp) > 0 && Number(c.roundDuration) > 0) {
         this.schedule = { genesis: Number(c.genesisTimestamp), roundSeconds: Number(c.roundDuration) };
       }
-    } catch { /* keep the default schedule */ }
+    } catch { /* keep the last schedule; none until the first answer */ }
   }
 
   emit(snap) {
     this.snap = snap;
+    // A new installation is a new chain: its heights restart, so the old baseline must not be compared
+    // against them, and its genesis (round schedule) has to be read again.
+    if (snap.installationId && snap.installationId !== this.installation) {
+      if (this.installation !== null) {
+        this.lastHeight = null;
+        this.schedule = null;
+        this.pollCore();
+      }
+      this.installation = snap.installationId;
+    }
     if (Number.isFinite(snap.height)) {
       if (this.lastHeight !== null && snap.height > this.lastHeight) {
         const delta = snap.height - this.lastHeight;

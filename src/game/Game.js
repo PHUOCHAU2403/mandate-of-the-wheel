@@ -1518,9 +1518,11 @@ export class Game {
     this.fx = wheelEffects(this.wheelShown, this.wheelSnap.rpm, this.base.armor);
     this.runStats[this.wheelShown] += dt;
 
+    // One Herald per turn of the round, even if the number jumps (a sleeping tab, or a redeploy
+    // that moved genesis): the jump is not that many rounds played.
     const r = this.roundSource().round;
     if (this.runRound > 0 && r > this.runRound) {
-      this.runStats.rounds += r - this.runRound;
+      this.runStats.rounds += 1;
       this.spawnHerald(r);
     }
     if (r > 0) this.runRound = r;

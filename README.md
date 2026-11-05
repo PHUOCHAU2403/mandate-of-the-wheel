@@ -2,6 +2,8 @@
 
 A hamster survivors game whose battle is steered by **Squeektoshi's real wheel** on [Squeekchain](https://squeekchain.com).
 
+**Play: https://wheel.arcpump.com**
+
 Pick a hamster, hold the burrow against the predators for ten waves, and transform as you level up. Every ten seconds the game
 reads Squeekchain's public API, and what Squeektoshi is doing at that moment changes the fight.
 

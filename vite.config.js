@@ -1,21 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 
+// Dev server stays on this machine with Vite's default host checks (no LAN exposure,
+// no DNS-rebinding opening). The production build is static files with relative paths.
 export default defineConfig(() => ({
   base: "./",
   server: {
-    host: "0.0.0.0",
+    host: "localhost",
     port: 5173,
-    allowedHosts: true,
-    hmr: {
-      overlay: false,
-      timeout: 15000,
-    },
-    watch: {
-      usePolling: true,
-      interval: 500,
-      binaryInterval: 500,
-    },
   },
   plugins: [react()],
 }));

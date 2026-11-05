@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parseStatus, liveMode, roundAt, WheelFeed, STALE_MS } from '../src/squeek/wheel.js';
 import { wheelEffects } from '../src/squeek/effects.js';
+import { newWheelState, stepWheel } from '../src/squeek/wheelArt.js';
 
 const real = JSON.parse(readFileSync(new URL('./fixtures/status-2026-11-04.json', import.meta.url), 'utf8'));
 const received = Date.parse(real.measurement.receivedAt);
@@ -96,4 +97,16 @@ test('effects: running scales with rpm, resting defends, unknown is neutral', ()
   assert.ok(rest.regenPct > 0);
   const fog = wheelEffects('unknown');
   assert.deepEqual([fog.atk, fog.move, fog.armor, fog.regenPct, fog.xp], [1, 1, 0, 0, 1]);
+});
+
+test('the drawn wheel turns at his real rpm, and stops when he rests or the reading is unknown', () => {
+  const st = newWheelState();
+  for (let i = 0; i < 600; i++) stepWheel(st, 1 / 60, 'running', 60);
+  // 60 rpm is one turn per second: 2*pi rad/s once eased in.
+  assert.ok(Math.abs(st.speed - 2 * Math.PI) < 0.01, `speed ${st.speed}`);
+  for (let i = 0; i < 600; i++) stepWheel(st, 1 / 60, 'resting', 60);
+  assert.equal(st.speed, 0);
+  for (let i = 0; i < 60; i++) stepWheel(st, 1 / 60, 'running', 120);
+  for (let i = 0; i < 600; i++) stepWheel(st, 1 / 60, 'unknown', 120);
+  assert.equal(st.speed, 0);
 });

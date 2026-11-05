@@ -46,6 +46,10 @@ A pause only counts as rest after 20 seconds of stillness, so a sprint break doe
 wallet, never sends a transaction, and nothing in it rewards waking Squeektoshi or punishes a nap, in line with the
 [care policy](https://docs.squeekchain.com/system/squeektoshi/).
 
+Squeektoshi himself is on screen too: the menu and the HUD show him in the **WHEELY9000**. The wheel turns at his
+real rpm, a magnet on the rim lights the sensor LED as it passes (one passage is one work unit on Squeekchain), he curls
+up asleep with drifting z's when he rests, and the device greys out with a "?" when the reading is unknown.
+
 ## How it reads Squeekchain
 
 All data comes from the public, keyless [Squeekchain API](https://docs.squeekchain.com/developers/api/) on Sepolia:

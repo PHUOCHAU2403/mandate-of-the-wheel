@@ -231,3 +231,9 @@
 .form-badge { background: rgba(255, 255, 255, 0.9); border: 2px solid #f3c98b; border-radius: 999px; }
 .form-badge span { color: var(--muted); }
 .results-form-label { color: var(--muted); }
+
+/* Squeektoshi in the WHEELY9000 beside the panel text */
+.wheel-body { display: flex; align-items: center; gap: 12px; }
+.wheel-info { flex: 1; min-width: 0; }
+.squeektoshi-wheel { flex: none; display: block; }
+.wheel-panel.compact .wheel-body { gap: 8px; }
